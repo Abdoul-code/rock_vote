@@ -1,5 +1,8 @@
 import React, {useState, useContext, useEffect} from 'react'
-import { UserContext } from '../context/UserProvider'
+import { UserContext } from '../context/UserProvider.js'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {faThumbsUp} from '@fortawesome/free-solid-svg-icons'
+import { faThumbsDown } from '@fortawesome/free-solid-svg-icons'
 
 
 export default function Issue(props){
@@ -9,21 +12,34 @@ export default function Issue(props){
         issues:[],
         errMsg:"",
 }
-const {comment, user } = useContext(UserContext)
+const { title, description,imgUrl, _id, username, upvotes, downvotes} = props
+const {userAxios, getUserIssues, user, allUsers, deleteIssue } = useContext(UserContext)
 
 const initInputs = {
     title: "",
     description: "",
     imgUrl: "",
-    comment:" "
   }
+
     const [userState, setUserState] = useState(initState)
-    const [allUsers, setAllUsers] = useState([])
-    const {userAxios } = useContext(UserContext)
     const [issueComments, setIssueComments] = useState([])
     const [inputs, setInputs] = useState({ comment : "" })
-    const {title , description, imgUrl, _id } = props
+   
 
+    const [upvotesCount, setUpvotesCount] = useState(upvotes.length)
+    const [downvotesCount, setDownvotesCount] = useState(downvotes.length)
+    
+    function getNewComments(issueId){
+        userAxios.get(`/api/issues/comments/${issueId}/comments`)
+        .then(res => setIssueComments(res.data))
+        .catch(err => console.log(err.response.data.errMsg))
+    }
+
+    function addComment(issueId, newComment){
+        userAxios.post(`/api/issues/comments/${issueId}/comments`, newComment)
+        .then(res => setIssueComments(prevState => [...prevState, res.data]))
+        .catch(err => console.log(err.response.data.errMsg))
+    }
 
     useEffect(() => {
         getNewComments(_id)
@@ -34,36 +50,49 @@ function onChange(e){
     const {name, value} =e.target
     setInputs(prevState => ({...prevState, [name]: value}))
 }
-function addComment(issueId, newComment){
-    userAxios.post(`/api/issues/comments/${issueId}/comments`, newComment)
-    .then(res => setIssueComments(prevState => [...prevState, res.data]))
-    .catch(err => console.log(err.response.data.errMsg))
-}
+
 function submitComments(e){
     e.preventDefault()
     addComment(_id, inputs)
     setInputs(initInputs)
 }
 
-function getNewComments(issueId){
-    userAxios.get(`/api/issues/comments/${issueId}/comments`)
-    .then(res => setIssueComments(res.data))
-    .catch(err => console.log(err.response.data.errMsg))
+function handleUpvote(_id){
+    console.log("userId",user._id,"id",_id)
+    if(_id !== user._id){
+        userAxios.put(`/api/issues/upvote/${_id}`)
+        .then( res => {
+            setUpvotesCount(res.data.upvotes)
+            setDownvotesCount(res.data.downvotes)
+        })
+        .catch(err => console.log(err))
+    }
+}
+
+function handleDownVote(_id){
+    if(_id !== user._id){
+    userAxios.put(`/api/issues/downvote/${_id}`)
+    .then( res => {
+        setDownvotesCount(res.data.downvotes)
+        setUpvotesCount(res.data.upvotes)
+    } )
+
+  .catch(err => console.log(err))
+    }
 }
 
 
-function getUserIssues(){
-    userAxios.get("/api/issues/user")
-    .then(res =>{
-        setUserState(prevState => ({
-            ...prevState,
-            issues:res.data
-        }))
+function update(issueId, issueEdit){
+    userAxios.put(`/api/issues/comments/${issueId}/comments`)
+    .then( res =>{
+     setUserState(prevState => prevState.issues.map(issue => issue.id !== issueId? issue:issueEdit))
     })
-    .catch(err => console.log(err.response.data.errMsg))
+    .catch(err => console.log(err))
+
 }
 
-    return(
+
+return(
       <>
         <div className='issue'>
  
@@ -73,6 +102,10 @@ function getUserIssues(){
                 <img src={imgUrl} alt={imgUrl} width={270} height = {300}/>
                     {issueComments.map(comment => <div>{comment.comment}</div>
                     )}
+                    <div className='upDown_container'>
+                  <h1 className='like-container'><FontAwesomeIcon onClick={() => handleUpvote(user._id)}  className="like-icon" icon={faThumbsUp} size="lg"/>{`${upvotesCount}`}</h1> 
+                  <h1 className='dislike-container'><FontAwesomeIcon onClick={() => handleDownVote(user._id)} className="dislike-icon" icon={faThumbsDown} size="lg"/>{`${downvotesCount}`}</h1> 
+                   </div>
                 </div>
 
                 {issueComments.map(comment => {
@@ -88,24 +121,26 @@ function getUserIssues(){
                                   alert(`Successfully deleted the comment`)
                               })
                               .catch(err => console.log("Delete fn err: ",err))
-                      } else {
+                      } 
+                      else {
                           alert("you can't delete this comment")
                       }
                   }}>Delete Comment</button>
+                 
                   </div>
           })}                
               
-          </div>
-                        <form onSubmit={submitComments}>
+                   <form onSubmit={submitComments}>
                     <input 
                     onChange={onChange}
                     name='comment'
                     type="text"
                     value={inputs.comment}
                     placeholder="Enter your comment" />
-                    <button>Submit</button>
-                    
+                    <button>Submit</button>   
                 </form>
+              <button onClick={() => deleteIssue(_id)}>Delete Issue</button>
+          </div>
      </>
     )
 }

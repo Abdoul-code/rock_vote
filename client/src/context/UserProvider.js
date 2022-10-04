@@ -2,6 +2,7 @@ import React, {useState,} from 'react'
 import { useParams } from 'react-router-dom'
 import axios from 'axios'
 
+
 export const UserContext = React.createContext()
 
 const userAxios = axios.create()
@@ -27,7 +28,8 @@ export default function UserProvider(props){
     const initInput = {comment:" "}
     const [inputs , setInputs] = useState({initInput})
     const [showComments, setShowComments] = useState(false)
-    const [allUser, setAllUsers] = useState([])
+    const [allUsers, setAllUsers] = useState([])
+    const [allIssues, setAllIssues] = useState([])
 
     function signup(credentials){
         axios.post("/auth/signup", credentials)
@@ -84,6 +86,12 @@ export default function UserProvider(props){
         }))
     }
 
+    function getAllIssues(){
+        userAxios.get('/api/issues')
+        .then(res => setAllIssues(res.data))
+        .catch(err => console.log(err.res.data.errMsg))
+    }
+
     function getUserIssues(){
         userAxios.get("/api/issues/user")
         .then(res =>{
@@ -111,6 +119,26 @@ export default function UserProvider(props){
         .then(res => setIssueComments(prevState => [...prevState, res.data]))
         .catch(err => console.log(err.response.data.errMsg))
     }
+
+    function deleteIssue(issueId){
+        userAxios.delete(`/api/issues/${issueId}`)
+        .then(res =>  setUserState(prevState =>({
+            ...prevState,
+            issues: prevState.issues.filter(issue => issue._id !== issueId)
+            
+        })))
+        .catch(err => console.log(err))
+    }
+
+    function update(issueId, issueEdit){
+        userAxios.put(`/api/issues/comments/${issueId}/comments`)
+        .then( res =>{
+         setUserState(prevState => prevState.issues.map(issue => issue.id !== issueId? issue:issueEdit))
+        })
+        .catch(err => console.log(err))
+    
+    }
+
     function getNewComments(issueId){
         userAxios.get(`/api/issues/comments/${issueId}/comments`)
         .then(res => setIssueComments(res.data))
@@ -154,7 +182,12 @@ export default function UserProvider(props){
             submitComments,
             getUserIssues,
             userAxios,
-            getAllUsers
+            getAllUsers,
+            allIssues,
+            getAllIssues,
+            allUsers,
+            deleteIssue,
+            update
 
         }}>
             {props.children}

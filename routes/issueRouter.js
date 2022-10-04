@@ -12,24 +12,8 @@ issueRouter.get("/", (req, res, next) => {
     return res.status(200).send(issue)
   })
 })
-//Issue comment 
-issueRouter.put("/addComment/:issueId", (req, res,next) =>{
-  Issue.findOneAndUpdate(
-    {_id:req.params.issueId},{$push:{
-    //may need user name
-    comment:req.body.comment
-  }},{new:true},
-  (err,issue) =>{
-    if(err){
-      res.status(500)
-      return next(err)
-    }
-    return res.status(200).send(issue)
-  }
-)
-})
 
-// Get todos by user id
+// Get issue by user id
 issueRouter.get("/user", (req, res, next) => {
   Issue.find({ user: req.auth._id }, (err, issue) => {
     if(err){
@@ -56,59 +40,82 @@ issueRouter.post("/", (req, res, next) => {
 // Delete Issues
 issueRouter.delete("/:issueId", (req, res, next) => {
   Issue.findOneAndDelete(
-    { _id: req.params.issueId, user: req.auth._id },
+    { _id: req.params.issueId, user: req.auth._id},
     (err, deletedIssue) => {
       if(err){
         res.status(500)
         return next(err)
       }
-      return res.status(200).send(`Successfully delete todo: ${deletedIssue.title}`)
+      return res.status(200).send(`Successfully delete Issue: ${deletedIssue.title}`)
     }
   )
 })
 
+
+
+//Issue comment 
+issueRouter.put("/addComment/:issueId", (req, res,next) =>{
+  Issue.findOneAndUpdate(
+    {_id:req.params.issueId},{$push:{
+    //may need user name
+    comment:req.body.comment
+  }},{new:true},
+  (err,issue) =>{
+    if(err){
+      res.status(500)
+      return next(err)
+    }
+    return res.status(200).send(issue)
+  }
+)
+})
+
+
 // Update Issues
-issueRouter.put("/:issueId", (req, res, next) => {
+issueRouter.put("/upvote/:issueId", (req, res, next) => {
   Issue.findOneAndUpdate(
     { _id: req.params.issueId, user: req.auth._id },
-    req.body,
+    {$addToSet: {upvotes: req.auth._id}, $pull:{downvotes:req.auth._id}},
     { new: true },
     (err, updatedIssue) => {
       if(err){
         res.status(500)
         return next(err)
       }
-      return res.status(201).send(updatedIssue)
+      return  res.status(201).send(updatedIssue)
     }
   )
 })
 
-//upvote
-// issueRouter.put("/upvote/:issueId", (req, res, next) => {
-//   console.log(typeof req.auth._id)
-//   Issue.findById(
-//     req.params.issueId,
-//     (err,upvotedIssue) =>{
-//       if(err){
-//         res.status(500)
-//         return next(err)
-//       }
-//       const hasUpvoted = updatedIssue.upvotes.includes(req.auth._id)
-//       if(hasUpvoted) {
-//         return res.status(200).send(`The user has already voted`)
-//       } else {
-//         Issue.findOneAndUpdate(req.params.issueId, {$push :{upvotes:req.auth._id}}, {new:true},
-//           (err, updatedIssue) =>{
-//             if(err){
-//               res.status(500)
-//               return next(err)
-//             }
-//             return res.status(201).send(updatedIssue)
-//           })
-//       }
-//       return res.status(201).send(updatedIssue)
-//     }
-//     )
-// })
+//downvote
+issueRouter.put("/downvote/:issueId", (req, res, next) => {
+  Issue.findByIdAndUpdate(
+   { _id: req.params.issueId, user: req.auth._id },
+   {$addToSet: {downvotes: req.auth._id}, $pull: {upvotes:req.auth._id}},
+    { new: true },
+    (err,updatedIssue) =>{
+      if(err){
+        res.status(500)
+        return next(err)
+      }
+      return res.status(200).send(updatedIssue)
+    }
+  )
+})
+
+issueRouter.put("/:issueId", (req, res, next) =>{
+      Issue.findOneAndUpdate(
+        {_id:req.params.issueId, user:req.auth._id},
+        req.body,
+         {new:true},
+            (err, updatedIssue) =>{
+              if(err){
+                res.status(500)
+                return next(err)
+              }
+              return res.status(201).send(updatedIssue)
+           })
+})
+
 
 module.exports = issueRouter

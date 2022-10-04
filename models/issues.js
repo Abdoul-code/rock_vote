@@ -7,8 +7,7 @@ const issueSchema = new Schema({
     required:true
   },
   description: {
-    type: String,
-    required:true
+    type: String
   },
   imgUrl: {
     type: String
@@ -27,6 +26,10 @@ const issueSchema = new Schema({
     ref: "User",
     required: true
   },
+  datePosted:{
+    type:Date,
+    default: Date.now
+  }
 })
 
 module.exports = mongoose.model("Issues", issueSchema)

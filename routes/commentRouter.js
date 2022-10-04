@@ -2,17 +2,6 @@ const express = require("express")
 const commentRouter = express.Router()
 const Comment = require('../models/comment.js')
 
-// Get comment by user id
-commentRouter.get("/:issueId/comments", (req,res,next) => {
-    Comment.find({issue:req.params.issueId}, (err,comments)=>{
-        if(err){
-            res.status(500)
-            return next(err)
-        }
-        return res.status(200).send(comments)
-    })
-})
-
 //get all the comment
 commentRouter.get("/", (req,res,next)=>{
     Comment.find((err,comments)=>{
@@ -24,7 +13,19 @@ commentRouter.get("/", (req,res,next)=>{
     })
 })
 
-//add new comment
+// Get comment by issue Id
+commentRouter.get("/:issueId/comments", (req,res,next) => {
+    Comment.find({issue:req.params.issueId}, (err,comments)=>{
+        if(err){
+            res.status(500)
+            return next(err)
+        }
+        return res.status(200).send(comments)
+    })
+})
+
+
+//add comment to issue by issueId
 commentRouter.post("/:issueId/comments", (req,res,next) =>{
     req.body.user = req.auth._id
     let issueId = req.params.issueId
@@ -39,10 +40,23 @@ commentRouter.post("/:issueId/comments", (req,res,next) =>{
     })
 })
 
-//Delete comment
+//find a comment by Id
+commentRouter.get("/:commentId", (req ,res, next) =>{
+    Comment.findById(req.params.commentId, (err, comment) =>{
+        if(err){
+            res.status(500);
+            return next(err)
+        } else if (!comment) {
+            res.status(404)
+            return next(new Error("no comment found."))
+        }
+        return res.send(comment);
+    })
+})
+
+//Delete comment by Id
 commentRouter.delete("/:issueId/comments/:commentId" ,(req,res,next) =>{
-    console.log("comment router hit: ", req.params, )
-    Comment.findOneAndRemove(
+       Comment.findOneAndRemove(
         {_id:req.params.commentId, user:req.auth._id},
         (err, deletedComment) =>{
             if(err){
@@ -57,15 +71,16 @@ commentRouter.delete("/:issueId/comments/:commentId" ,(req,res,next) =>{
 //update comment
 commentRouter.put("/:commentId", (req,res,next) =>{
     Comment.findByIdAndUpdate(
-        {_id: req.params.issueId, user:req.auth._id},
+        {_id: req.params.commentId, user:req.auth._id},
         req.body,
         {new:true},
-        (err, updatedComment) =>{
+        (err, comment) =>{
             if(err){
+                console.log("Error")
                 res.status(500)
                 return next(err)
             }
-            return res.status(201).send(updatedComment)
+            return res.status(201).send(comment)
         }
     )
 })
