@@ -69,13 +69,13 @@ export default function PublicIssues(props){
 return (
     <div className='issue-container'>
         <div className='publicIssue'>
-            <h2>{allUsers.find(u => u._id === author).username} {title}</h2>
+            <h2>{allUsers.find(u => u._id === author)?.username} {title}</h2>
             <h2>{description}</h2>
             <img src={imgUrl} alt={imgUrl} width={270} height = {300}/>
             <h3>posted on {new Date(datePosted).toLocaleDateString()}</h3>
             <div className='upDown_container'>
-            <h1 className='like-container'><FontAwesomeIcon onClick={() => handleUpvote(_id)}  className="like-icon" icon={faThumbsUp} size="lg"/>{`${upvotesCount.length}`}</h1> 
-            <h1 className='dislike-container'><FontAwesomeIcon onClick={() => handleDownVote(_id)} className="dislike-icon" icon={faThumbsDown} size="lg"/>{`${downvotesCount.length}`}</h1> 
+            <h1 className='like-container'><FontAwesomeIcon onClick={() => handleUpvote(_id)}  className="like-icon" icon={faThumbsUp} size="lg"/>{`${upvotesCount?.length}`}</h1> 
+            <h1 className='dislike-container'><FontAwesomeIcon onClick={() => handleDownVote(_id)} className="dislike-icon" icon={faThumbsDown} size="lg"/>{`${downvotesCount?.length}`}</h1> 
             </div>
             {!showComments ?
              <button className="comment-button" onClick={() => setShowComments(!showComments)}>show</button>:

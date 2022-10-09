@@ -125,7 +125,7 @@ return(
                       else {
                           alert("you can't delete this comment")
                       }
-                  }}>Delete Comment</button>
+                  }}>Cancel</button>
                  
                   </div>
           })}                
@@ -137,7 +137,7 @@ return(
                     type="text"
                     value={inputs.comment}
                     placeholder="Enter your comment" />
-                    <button>Submit</button>   
+                    <button>Save Comment</button>   
                 </form>
               <button onClick={() => deleteIssue(_id)}>Delete Issue</button>
           </div>
